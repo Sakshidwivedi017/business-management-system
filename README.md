@@ -1,4 +1,4 @@
-# lecxe-chatbot
+# Business Management System
 
 A role-aware conversational assistant for inventory and procurement. Staff sign in, see a
 dashboard for their role, and ask questions in plain language ("Which items are low on stock?",
