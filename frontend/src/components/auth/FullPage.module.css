@@ -1,0 +1,24 @@
+.page {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.secondary {
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--space-6);
+  margin-top: calc(-1 * var(--space-4));
+}

@@ -1,0 +1,32 @@
+# Secrets: real configuration stays local; only the .env.example templates are shared.
+.env
+.env.*
+!.env.example
+
+# Full database dump: real business data, password hashes and old conversations. Never share it.
+# (schema_dump.sql is schema only and is kept as a reference.)
+full_dump.sql
+*.dump
+
+# Python environments: backend/.venv is the project's; venv/ is an unused legacy environment.
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend build output and dependencies
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.log

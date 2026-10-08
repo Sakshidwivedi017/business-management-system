@@ -1,0 +1,41 @@
+/* Shared by EmptyState and ErrorState. */
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-6);
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+}
+
+.error .icon {
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.title {
+  font-size: var(--text-lg);
+}
+
+.description {
+  margin-top: var(--space-2);
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+
+.action {
+  margin-top: var(--space-5);
+}

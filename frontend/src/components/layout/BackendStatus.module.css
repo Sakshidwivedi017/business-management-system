@@ -1,0 +1,27 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-muted);
+}
+
+.status[data-status="online"] .dot {
+  background: var(--color-success);
+}
+
+.status[data-status="offline"] .dot {
+  background: var(--color-danger);
+}
+
+.status[data-status="offline"] {
+  color: var(--color-danger);
+}
