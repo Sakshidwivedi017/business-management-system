@@ -1,5 +1,6 @@
 """Read-only aggregate queries backing the owner summaries."""
 
+from datetime import date
 from typing import Any
 
 from sqlalchemy import Connection
@@ -138,20 +139,60 @@ def top_vendors_by_spend(conn: Connection, limit: int) -> list[dict[str, Any]]:
     )
 
 
-def purchase_orders_by_month(conn: Connection, months: int) -> list[dict[str, Any]]:
-    """Orders placed per calendar month and currency, for the current month and the months before it."""
+def purchase_order_dates(conn: Connection) -> dict[str, Any]:
+    """The first and last order dates (placed_on), orders without one, and today's date in UTC."""
+    row = fetch_one(
+        conn,
+        "SELECT min(placed_on) AS first_order_on, max(placed_on) AS last_order_on,"
+        " count(*) FILTER (WHERE placed_on IS NULL) AS orders_without_date,"
+        " CAST(now() AT TIME ZONE 'UTC' AS date) AS today"
+        " FROM proc_purchase_orders",
+    )
+    assert row is not None
+    return row
+
+
+# Every calendar month from :first to :last (both first days of a month), so a month without orders is a row too.
+_MONTHS = "SELECT m AS month FROM generate_series(CAST(:first AS timestamp), CAST(:last AS timestamp), interval '1 month') m"
+_IN_MONTH = "po.placed_on >= months.month AND po.placed_on < months.month + interval '1 month'"
+
+
+def purchase_orders_by_month(conn: Connection, first: date, last: date) -> list[dict[str, Any]]:
+    """Orders placed per calendar month and currency from month `first` to month `last`, oldest first.
+
+    Months without orders count 0, for each currency ordered in the range. Values stay per currency.
+    """
     return fetch_all(
         conn,
-        """
-        SELECT CAST(date_trunc('month', po.placed_on) AS timestamp) AS month, po.currency,
-               count(*) AS purchase_orders, sum(po.total_amount) AS total_amount
-        FROM proc_purchase_orders po
-        WHERE po.placed_on >= CAST(date_trunc('month', now() AT TIME ZONE 'UTC')
-                                   - make_interval(months => :months - 1) AS date)
-        GROUP BY 1, po.currency
-        ORDER BY 1, po.currency
+        f"""
+        WITH months AS ({_MONTHS}),
+        currencies AS (
+            SELECT DISTINCT currency FROM proc_purchase_orders
+            WHERE placed_on >= :first AND placed_on < CAST(:last AS date) + interval '1 month'
+        )
+        SELECT months.month, c.currency, count(po.id) AS purchase_orders,
+               COALESCE(sum(po.total_amount), 0) AS total_amount
+        FROM months CROSS JOIN currencies c
+        LEFT JOIN proc_purchase_orders po ON po.currency = c.currency AND {_IN_MONTH}
+        GROUP BY months.month, c.currency
+        ORDER BY months.month, c.currency
         """,
-        months=months,
+        first=first, last=last,
+    )
+
+
+def purchase_order_counts_by_month(conn: Connection, first: date, last: date) -> list[dict[str, Any]]:
+    """Orders placed per calendar month from month `first` to month `last`, oldest first; 0 for none."""
+    return fetch_all(
+        conn,
+        f"""
+        WITH months AS ({_MONTHS})
+        SELECT months.month, count(po.id) AS purchase_orders
+        FROM months LEFT JOIN proc_purchase_orders po ON {_IN_MONTH}
+        GROUP BY months.month
+        ORDER BY months.month
+        """,
+        first=first, last=last,
     )
 
 

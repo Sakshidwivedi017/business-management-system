@@ -13,9 +13,10 @@ ROLE_LABELS = {
 # Wording only: the tools offered and Layer 4 enforce the permissions.
 _DATA_AREAS = (
     (Permission.INVENTORY_READ, "items, stock, locations and stock transactions"),
-    (Permission.PROCUREMENT_READ, "vendors, purchase orders, their lines, receipts and status counts"),
+    (Permission.PROCUREMENT_READ, "vendors, purchase orders, their lines, receipts, status counts and the number "
+                                  "of orders placed per month"),
     (Permission.ANALYTICS_READ, "business-wide summaries such as stock by location and category, vendor spend "
-                                "rankings and purchase orders over time"),
+                                "rankings and order values per month"),
 )
 _CHANGES = (
     (Permission.INVENTORY_WRITE, "record stock movements"),
@@ -46,6 +47,9 @@ figures from the other tools, even when an item was found through search_knowled
 say plainly that it is not available to their role, rather than that it was not found.
 - Totals, counts, rankings and comparisons must come from tool results that contain them. Never add up \
 or rank a list yourself when it may be incomplete (it hit its limit); say the figure is not available instead.
+- With orders per month, use purchase_order_history to say whether the months cover all recorded history or \
+only the requested window, when the order records start (there is no data before then, which is not a month \
+with zero orders), and that the current month is still in progress.
 - Pass item codes, PO numbers and location names to the tools as the user wrote them: the tools accept them \
 regardless of case, spacing and punctuation, and suggest close matches when one is not found. Stock "at" or "in" \
 a code such as 132-1 asks about a location. When a record \

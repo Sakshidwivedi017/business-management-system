@@ -130,6 +130,8 @@ COLUMNS: dict[tuple[str, str], tuple[str, tuple[DatasetColumn, ...]]] = {
     ("procurement_overview", "open_purchase_orders"): ("Open purchase orders", _cols(
         _CURRENCY, ("purchase_orders", "Orders", _N), ("total_amount", "Value", _A),
         ("lines_pending_delivery", "Lines pending", _N))),
+    ("procurement_overview", "purchase_orders_by_month"): ("Purchase orders placed per month", _cols(
+        ("month", "Month", _D), ("purchase_orders", "Orders", _N))),
 }
 
 # Headline figures of the summary tools: (dotted path in the result, label).

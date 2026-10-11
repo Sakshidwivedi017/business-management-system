@@ -338,8 +338,13 @@ def test_live_procurement_overview_for_the_procurement_manager(demo_users):
     result = execute_tool(demo_users["procurement_manager"], "procurement_overview", {})
     assert not result.is_error
     overview = parse(result)["result"]
-    assert set(overview) == {"total_vendors", "active_vendors", "purchase_orders_by_status", "open_purchase_orders"}
+    assert set(overview) == {"total_vendors", "active_vendors", "purchase_orders_by_status", "open_purchase_orders",
+                             "purchase_orders_by_month", "purchase_order_history"}
     assert "top_vendors_by_spend" not in overview  # vendor spend stays an owner (analytics) figure
+    assert all(set(row) == {"month", "purchase_orders"} for row in overview["purchase_orders_by_month"])
+    assert overview["purchase_order_history"]["window"] == "last 12 months, this month included"
+    all_history = parse(execute_tool(demo_users["procurement_manager"], "procurement_overview", {"months": None}))
+    assert all_history["result"]["purchase_order_history"]["window"] == "all recorded history"
     denied = execute_tool(demo_users["inventory_manager"], "procurement_overview", {})
     assert parse(denied) == {"error": "You do not have permission to use procurement_overview"}
 

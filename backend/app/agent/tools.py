@@ -84,6 +84,7 @@ class GetVendorArgs(_Args):
 
 
 class ListPurchaseOrdersArgs(_Args):
+    # pyrefly: ignore [invalid-literal]
     status: Literal[procurement.PO_STATUSES] | None = None
     vendor_id: Text | None = Field(None, description="Vendor id, as returned by list_vendors")
     limit: int = Field(20, ge=1, le=50)
@@ -97,14 +98,19 @@ class InventorySummaryArgs(_Args):
     recent_days: int = Field(30, ge=1, le=365)
 
 
+_MONTHS = (
+    "Orders per month for the last N months, this month included (for example 6 for the last six months), or "
+    "null for all recorded history"
+)
+
+
 class ProcurementSummaryArgs(_Args):
     top_vendors: int = Field(10, ge=1, le=50)
-    months: int = Field(12, ge=0, le=analytics.MAX_TREND_MONTHS,
-                        description="Months of orders-per-month history to include, this month included")
+    months: int | None = Field(12, ge=1, le=analytics.MAX_TREND_MONTHS, description=_MONTHS)
 
 
 class ProcurementOverviewArgs(_Args):
-    pass
+    months: int | None = Field(12, ge=1, le=analytics.MAX_TREND_MONTHS, description=_MONTHS)
 
 
 class SearchKnowledgeArgs(_Args):
@@ -211,12 +217,14 @@ TOOLS: dict[str, AgentTool] = {
                   "location and category, recent transaction counts.", InventorySummaryArgs, _ANALYTICS,
                   analytics.inventory_summary),
         AgentTool("procurement_summary", "Business-wide procurement summary: purchase orders by status, open "
-                  "orders, top vendors by spend, and orders placed per month (count and value per currency).",
+                  "orders, top vendors by spend, and orders placed per month (count and value per currency) with "
+                  "purchase_order_history: the months covered and whether that is all recorded history.",
                   ProcurementSummaryArgs, _ANALYTICS, analytics.procurement_summary),
         AgentTool("procurement_overview", "Exact purchase order counts and values by status and of open orders "
-                  "(per currency), and vendor counts. Use it for questions about order statuses or how many "
-                  "orders there are, instead of counting a list.", ProcurementOverviewArgs, _PROC,
-                  dashboard.procurement_overview),
+                  "(per currency), vendor counts, and the number of orders placed per month with "
+                  "purchase_order_history (the months covered and whether that is all recorded history). Use it "
+                  "for questions about order statuses, how many orders there are or order volume over time, "
+                  "instead of counting a list.", ProcurementOverviewArgs, _PROC, dashboard.procurement_overview),
         AgentTool("search_knowledge", "Semantic search over descriptive catalogue text: items (name, code, "
                   "category, unit, HSN, notes) and the item classification guide (descriptions, standards, naming "
                   "conventions, examples). Use it when the user describes something in their own words, or asks "

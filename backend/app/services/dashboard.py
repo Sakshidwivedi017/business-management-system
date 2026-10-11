@@ -42,14 +42,23 @@ def inventory_overview(conn: Connection, user: AuthenticatedUser) -> dict[str, A
 
 
 @database_errors("procurement_overview")
-def procurement_overview(conn: Connection, user: AuthenticatedUser) -> dict[str, Any]:
-    """Vendor counts and purchase orders by status and open, per currency, as in procurement_summary."""
+def procurement_overview(conn: Connection, user: AuthenticatedUser, months: int | None = 0) -> dict[str, Any]:
+    """Vendor counts and purchase orders by status and open, per currency, as in procurement_summary.
+
+    Unless `months` is 0 (the dashboard), also the number of orders placed per month, without values
+    (analytics.purchase_order_trend): records this role can already list, counted.
+    """
     ensure_permission(user, Permission.PROCUREMENT_READ)
-    return {
+    analytics.validate_months(months)
+    overview = {
         **repo.vendor_counts(conn),
         "purchase_orders_by_status": repo.purchase_orders_by_status(conn),
         "open_purchase_orders": repo.open_purchase_orders(conn, list(OPEN_PO_STATUSES)),
     }
+    if months != 0:
+        rows, history = analytics.purchase_order_trend(conn, months, values=False)
+        overview |= {"purchase_orders_by_month": rows, "purchase_order_history": history}
+    return overview
 
 
 def dashboard_overview(conn: Connection, user: AuthenticatedUser) -> dict[str, Any]:

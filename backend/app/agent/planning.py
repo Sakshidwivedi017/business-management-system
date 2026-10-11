@@ -151,6 +151,9 @@ RESULT_SHAPES: dict[str, tuple[_Shape, ...]] = {
         _Shape("purchase_orders_by_status", _CAT, "status", ("purchase_orders", "total_amount"), "currency",
                ("status",)),
         _Shape("open_purchase_orders"),
+        # Counts only: orders in every currency are counted together, and no values are included.
+        _Shape("purchase_orders_by_month", DataKind.TIME_SERIES, "month", ("purchase_orders",),
+               topic=("month", "trend", "time")),
     ),
     "search_knowledge": (),
 }
@@ -200,8 +203,9 @@ _OVERVIEW = _words("summary", "summari[sz]e", "overview", "overall")  # analytic
 # a trend is read along time (line), a comparison or ranking across categories (bar). A part-to-whole
 # question ("distribution of statuses") is a comparison of its parts and is drawn as bars too.
 _TREND = _words("trends?", "over time", "monthly", "weekly", "daily", "yearly", "growth", "chang(?:e|ed|es|ing)",
-                "per (?:month|week|day|year)", "by (?:month|week|day|year)",
-                r"(?:last|past) (?:\d+ )?(?:days|weeks|months|years|quarters?)")
+                "(?:per|by|each|every) (?:month|week|day|year)",
+                r"(?:last|past) (?:(?:\d+|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve) )?"
+                "(?:days|weeks|months|years|quarters?)")
 _COMPARE = _words(
     "compare[ds]?", "comparing", "comparison", "versus", "vs", "across", "relative to", "breakdown", "break down",
     "distribution", "distributed", "split", "share", "proportions?", "composition",
@@ -470,6 +474,9 @@ MAX_LINE_SERIES = 6
 # Bars a reader can compare at a glance. A longer list is clearer as a sorted table, so a chart is drawn
 # for more categories only when the user asks for one.
 MAX_AUTO_CATEGORIES = 20
+# Rows the browser receives per dataset (datasets.MAX_ROWS): a longer series would be drawn without its
+# latest points, so it is shown as a table that says it was cut short.
+MAX_SERIES_ROWS = 50
 _NUMERIC = re.compile(r"^-?\d+(?:\.\d+)?$")
 _TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
@@ -509,7 +516,7 @@ def _chartable(shape: _Shape, rows: list[Any]) -> bool:
     if len(rows) < 2 or len(set(values)) < 2:
         return False
     if shape.kind is DataKind.TIME_SERIES:
-        return len(groups) <= MAX_LINE_SERIES
+        return len(groups) <= MAX_LINE_SERIES and len(rows) <= MAX_SERIES_ROWS
     panels = len(groups) * (len(shape.y) if len(shape.y) > 1 else 1)  # a conservative bound on the frontend's panels
     return (
         panels <= MAX_BAR_PANELS
